@@ -93,8 +93,8 @@ class Location(models.Model):
         from simplegeo.util import APIError
         
         client = Client(
-            settings.PLACES_SIMPLEGEO_OAUTH_KEY,
-            settings.PLACES_SIMPLEGEO_SECRET
+            settings.LOCI_SIMPLEGEO_OAUTH_KEY,
+            settings.LOCI_SIMPLEGEO_SECRET
         )
         
         try:
