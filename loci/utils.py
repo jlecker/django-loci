@@ -8,8 +8,8 @@ from simplegeo.util import APIError
 
 def geocode(query):
     client = Client(
-        settings.PLACES_SIMPLEGEO_OAUTH_KEY,
-        settings.PLACES_SIMPLEGEO_SECRET
+        settings.LOCI_SIMPLEGEO_OAUTH_KEY,
+        settings.LOCI_SIMPLEGEO_SECRET
     )
     try:
         data = client.context.get_context_by_address(query)
