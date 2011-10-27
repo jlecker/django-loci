@@ -1,0 +1,7 @@
+Yet another location management app.
+
+1. Store information about places.
+2. Find out where a request is coming from.
+3. Easily find nearby stored places and other information.
+
+Uses SimpleGeo API for lookups.
