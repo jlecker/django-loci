@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% load loci_tags %}
+
+{% block content %}
+<h1>Loci Home</h1>
+
+{% if locations %}
+<h2>Locations in the Database</h2>
+    {% google_map for locations and user.location.address.geometry.coordinates.1 user.location.address.geometry.coordinates.0 %}
+    <ol>
+    {% for l in locations %}
+        {% distance from l to user.location.address.geometry.coordinates.1 user.location.address.geometry.coordinates.0 as dist %}
+        <li><ul>
+            <li>Address: {{ l.address }}, {{ l.city }} {{ l.state }} {{ l.zip_code }}</li>
+            <li>Location: {{ l.latitude }} {{ l.longitude }}</li>
+            <li>Distance from You: {{ dist.miles|floatformat }} miles</li>
+        </ul></li>
+    {% endfor %}
+    </ol>
+{% else %}
+    <p>There are no locations in the database.</p>
+{% endif %}
+
+<h2>Add A Location</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p><input type="Submit"/></p>
+</form>
+{% endblock %}
