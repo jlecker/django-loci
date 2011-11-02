@@ -1,17 +1,13 @@
 from django import forms
 
-from loci.models import Location
+from loci.models import Place
 
 
-class LocationForm(forms.ModelForm):
-    
-    name = forms.CharField()
-    phone = forms.CharField(required=False)
-    website = forms.CharField(required=False)
-    
+class PlaceForm(forms.ModelForm):
     class Meta:
-        model = Location
+        model = Place
         fields = [
+            "name",
             "address",
             "city",
             "state",

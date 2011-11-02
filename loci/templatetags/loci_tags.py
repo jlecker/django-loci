@@ -1,12 +1,12 @@
 from django import template
 
-from loci.models import Location
+from loci.models import Place
 
 
 register = template.Library()
 
 
-class LocationMapNode(template.Node):
+class PlaceMapNode(template.Node):
     
     @classmethod
     def handle_token(cls, parser, token):
@@ -25,18 +25,18 @@ class LocationMapNode(template.Node):
             )
         return cls()
     
-    def __init__(self, locations=None, latitude=None, longitude=None):
-        self.locations = locations
+    def __init__(self, places=None, latitude=None, longitude=None):
+        self.places = places
         self.latitude = latitude
         self.longitude = longitude
     
     def render(self, context):
-        if self.locations and self.latitude and self.longitude:
-            locations = self.locations.resolve(context)
+        if self.places and self.latitude and self.longitude:
+            places = self.places.resolve(context)
             latitude = self.latitude.resolve(context)
             longitude = self.longitude.resolve(context)
         else:
-            locations = Location.objects.all()
+            places = Place.objects.all()
             latitude = None
             longitude = None
         
@@ -45,8 +45,8 @@ class LocationMapNode(template.Node):
         url += "&maptype=roadmap"
         url += "&sensor=false"
         
-        for location in locations:
-            url += "&markers=color:blue%%7C%s,%s" % (location.latitude, location.longitude)
+        for place in places:
+            url += "&markers=color:blue%%7C%s,%s" % (place.latitude, place.longitude)
         if latitude and longitude:
             url += "&markers=color:red%%7C%s,%s" % (latitude, longitude)
         
@@ -57,9 +57,9 @@ class LocationMapNode(template.Node):
 def google_map(parser, token):
     """
     Usage::
-        {% google_map for locations and latitude longitude %}
+        {% google_map for places and latitude longitude %}
     """
-    return LocationMapNode.handle_token(parser, token)
+    return PlaceMapNode.handle_token(parser, token)
 
 
 class DistanceNode(template.Node):
@@ -78,17 +78,17 @@ class DistanceNode(template.Node):
             bits[7]
         )
     
-    def __init__(self, location, latitude, longitude, varname):
-        self.location = location
+    def __init__(self, place, latitude, longitude, varname):
+        self.place = place
         self.latitude = latitude
         self.longitude = longitude
         self.varname = varname
     
     def render(self, context):
-        location = self.location.resolve(context)
+        place = self.place.resolve(context)
         latitude = self.latitude.resolve(context)
         longitude = self.longitude.resolve(context)
-        context[self.varname] = location.distance_to(
+        context[self.varname] = place.distance_to(
             latitude=latitude,
             longitude=longitude
         )
@@ -99,6 +99,6 @@ class DistanceNode(template.Node):
 def distance(parser, token):
     """
     Usage::
-        {% distance from location to latitude longitude as var %}
+        {% distance from place to latitude longitude as var %}
     """
     return DistanceNode.handle_token(parser, token)

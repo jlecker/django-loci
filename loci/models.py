@@ -1,20 +1,16 @@
-from decimal import Decimal
-
 from django.db import models
 from django.conf import settings
-
-from django.contrib.localflavor.us.models import USStateField, PhoneNumberField
+from django.contrib.localflavor.us.models import USStateField
 
 import geopy.distance
 
-# from simplegeo import Client
-# from simplegeo.util import APIError
+from loci.utils import geocode
 
 
-class LocationManager(models.Manager):
+class PlaceManager(models.Manager):
     
     def __init__(self):
-        super(LocationManager, self).__init__()
+        super(PlaceManager, self).__init__()
     
     def near(self, latitude=None, longitude=None, distance=None):
         if not (latitude and longitude and distance):
@@ -51,78 +47,44 @@ class LocationManager(models.Manager):
         return queryset
 
 
-class Location(models.Model):
-
-    latitude = models.FloatField(null=True, blank=True, editable=False)
-    longitude = models.FloatField(null=True, blank=True, editable=False)
-    address = models.TextField(blank=True)
-    city = models.CharField(max_length=100, blank=True)
+class Place(models.Model):
+    name = models.CharField(max_length=200)
+    address = models.CharField(max_length=180, blank=True)
+    city = models.CharField(max_length=50, blank=True)
     state = USStateField(blank=True)
-    zip_code = models.CharField(max_length=10, blank=True, db_column="zip")
-
-    objects = LocationManager()
+    zip_code = models.CharField(max_length=10, blank=True)
+    
+    latitude = models.FloatField(null=True, blank=True, default=None)
+    longitude = models.FloatField(null=True, blank=True, default=None)
+    
+    objects = PlaceManager()
     
     def __unicode__(self):
-        return u"%s %s, %s %s at (%s, %s)" % (
+        return u'%s (%s, %s)' % (self.name, self.latitude, self.longitude)
+    
+    def save(self, *args, **kwargs):
+        (self.location, address_tuple) = geocode(self.full_address)
+        super(Place, self).save(*args, **kwargs)
+    
+    def distance_to(self, latitude, longitude):
+        return geopy.distance.distance(
+            (latitude, longitude),
+            self.location,
+        )
+    
+    @property
+    def full_address(self):
+        return '%s, %s %s %s' % (
             self.address,
             self.city,
             self.state,
             self.zip_code,
-            self.latitude,
-            self.longitude
         )
-    
-    def distance_to(self, latitude, longitude):
-        exact_distance = geopy.distance.distance(
-            (latitude, longitude),
-            (self.latitude, self.longitude)
-        )
-        return exact_distance
-    
+
     @property
-    def full_address(self):
-        return "%s %s, %s %s" % (
-            self.address,
-            self.city,
-            self.state,
-            self.zip_code
-        )
-    
-    def geo_code(self):
-        from simplegeo import Client
-        from simplegeo.util import APIError
-        
-        client = Client(
-            settings.LOCI_SIMPLEGEO_OAUTH_KEY,
-            settings.LOCI_SIMPLEGEO_SECRET
-        )
-        
-        try:
-            data = client.context.get_context_by_address(self.full_address)
-            # There is a ton of useful data in this dict: might be worth
-            # storing the rest of it somewhere
-            # {..., 'query': {'address': '54403',
-            #           'latitude': Decimal('44.952863'),
-            #           'longitude': Decimal('-89.531804')},
-            # ...}
-            point = data.get("query", {}).get("latitude"), data.get("query", {}).get("longitude")
-            self.latitude, self.longitude = point
-        except APIError:
-            self.latitude = None
-            self.longitude = None
-    
-    def save(self, *args, **kwargs):
-        self.geo_code()
-        super(Location, self).save(*args, **kwargs)
+    def location(self):
+        return (self.latitude, self.longitude)
 
-
-class Place(models.Model):
-    
-    location = models.ForeignKey(Location)
-    name = models.CharField(max_length=255)
-    slug = models.SlugField()
-    phone = PhoneNumberField(blank=True)
-    website = models.URLField(blank=True)
-    
-    def __unicode__(self):
-        return unicode(self.name)
+    @location.setter
+    def location(self, point):
+        (self.latitude, self.longitude) = point

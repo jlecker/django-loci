@@ -1,19 +1,52 @@
 from django.conf import settings
-
-from geopy import geocoders
+from django.core.cache import cache
+from django.template.defaultfilters import slugify
 
 from simplegeo import Client
 from simplegeo.util import APIError
 
 
-def geocode(query):
+def _geo_query(query, query_type=None):
+    cache_key = 'geo:' + slugify(str(query))
+    location = cache.get(cache_key)
+    if location:
+        return location
+    
+    # data not in cache, do an API query
     client = Client(
         settings.LOCI_SIMPLEGEO_OAUTH_KEY,
         settings.LOCI_SIMPLEGEO_SECRET
     )
     try:
-        data = client.context.get_context_by_address(query)
-        point = data.get("query", {}).get("latitude"), data.get("query", {}).get("longitude")
-        return None, point[0], point[1]
+        if query_type == 'address':
+            data = client.context.get_context_by_address(query)
+        elif query_type == 'ip':
+            data = client.context.get_context_by_ip(query)
+        else:
+            (lat, lon) = query
+            data = client.context.get_context(lat, lon)
     except APIError:
-        return None, None, None
+        data = {}
+    
+    # for now, we only need coords and address, but more is available
+    query = data.get('query', {})
+    location = (query.get('latitude'), query.get('longitude'))
+    aprops = data.get('address', {}).get('properties', {})
+    address = (
+        aprops.get('address'),
+        aprops.get('city'),
+        aprops.get('province'),
+        aprops.get('postcode')
+    )
+    
+    # not sure if tuple-izing everything is the best way
+    cache.set(cache_key, (location, address), 86400)
+    return (location, address)
+
+
+def geocode(address):
+    return _geo_query(address, query_type='address')
+
+
+def geolocate(ip):
+    return _geo_query(ip, query_type='ip')

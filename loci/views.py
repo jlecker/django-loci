@@ -1,27 +1,20 @@
 from django.shortcuts import render, redirect
 from django.template import RequestContext
 
-from loci.forms import LocationForm
-from loci.models import Location, Place
+from loci.forms import PlaceForm
+from loci.models import Place
 
 
 def home(request):
-    
     if request.method == "POST":
-        form = LocationForm(request.POST)
+        form = PlaceForm(request.POST)
         if form.is_valid():
-            location = form.save()
-            Place.objects.create(
-                location=location,
-                name=form.cleaned_data["name"],
-                phone=form.cleaned_data["phone"],
-                website=form.cleaned_data["website"]
-            )
+            place = form.save()
             return redirect("home")
     else:
-        form = LocationForm()
+        form = PlaceForm()
     
     return render(request, "loci/home.html", {
         "form": form,
-        "locations": Location.objects.all()
+        "places": Place.objects.all()
     })

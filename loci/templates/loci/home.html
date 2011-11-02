@@ -5,15 +5,16 @@
 {% block content %}
 <h1>Loci Home</h1>
 
-{% if locations %}
-<h2>Locations in the Database</h2>
-    {% google_map for locations and user.location.address.geometry.coordinates.1 user.location.address.geometry.coordinates.0 %}
+{% if places %}
+<h2>Places in the Database</h2>
+    {% google_map for places and request.geolocation.address.geometry.coordinates.1 request.geolocation.address.geometry.coordinates.0 %}
     <ol>
-    {% for l in locations %}
-        {% distance from l to user.location.address.geometry.coordinates.1 user.location.address.geometry.coordinates.0 as dist %}
+    {% for p in places %}
+        {% distance from p to request.geolocation.address.geometry.coordinates.1 request.geolocation.address.geometry.coordinates.0 as dist %}
         <li><ul>
-            <li>Address: {{ l.address }}, {{ l.city }} {{ l.state }} {{ l.zip_code }}</li>
-            <li>Location: {{ l.latitude }} {{ l.longitude }}</li>
+            <li>Name: {{ p.name }}</li>
+            <li>Address: {{ p.address }}, {{ p.city }} {{ p.state }} {{ p.zip_code }}</li>
+            <li>Location: {{ p.latitude }} {{ p.longitude }}</li>
             <li>Distance from You: {{ dist.miles|floatformat }} miles</li>
         </ul></li>
     {% endfor %}
@@ -22,7 +23,7 @@
     <p>There are no locations in the database.</p>
 {% endif %}
 
-<h2>Add A Location</h2>
+<h2>Add A Place</h2>
 <form method="POST">
     {% csrf_token %}
     {{ form.as_p }}
