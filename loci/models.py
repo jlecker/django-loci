@@ -1,31 +1,37 @@
 from django.db import models
+from django.db.models.query import QuerySet
 from django.conf import settings
 from django.contrib.localflavor.us.models import USStateField
 
+from geopy.units import nautical, degrees
 import geopy.distance
 
 from loci.utils import geocode
 
 
 class PlaceManager(models.Manager):
-    
-    def __init__(self):
-        super(PlaceManager, self).__init__()
-    
-    def near(self, latitude=None, longitude=None, distance=None):
-        if not (latitude and longitude and distance):
-            return []
+    def get_query_set(self):
+        return PlaceQuerySet(self.model, using=self.db)
+
+    def near(self, *args, **kwargs):
+        return self.get_query_set().near(*args, **kwargs)
+
+
+class PlaceQuerySet(QuerySet):
+    def near(self, location, distance):
+        """
+        Returns a list of items in the QuerySet which are within the given
+        distance of the given location. Does NOT return a QuerySet.
         
-        queryset = super(PlaceManager, self).get_query_set()
-        
+        """
+
         # prune down the set of all locations to something we can quickly check
         # precisely
-        minutes = Decimal(str(geopy.distance.nm(miles=distance)))
-        rough_distance = Decimal(str(geopy.distance.arc_degrees(arcminutes=minutes) * 2))
-        lat_range = (latitude - rough_distance, latitude + rough_distance)
-        long_range = (longitude - rough_distance, longitude + rough_distance)
-        
-        queryset = queryset.filter(
+        (latitude, longitude) = location
+        deg_lat = degrees(arcminutes=nautical(miles=distance))
+        lat_range = (latitude - deg_lat, latitude + deg_lat)
+        long_range = (longitude - deg_lat * 2, longitude + deg_lat * 2)
+        queryset = self.filter(
             latitude__range=lat_range,
             longitude__range=long_range
         )
@@ -38,13 +44,9 @@ class PlaceManager(models.Manager):
                     (location.latitude, location.longitude)
                 )
                 exact_distance.calculate()
-                
                 if exact_distance.miles <= distance:
                     locations.append(location)
-        
-        queryset = queryset.filter(id__in=[l.id for l in locations])
-        
-        return queryset
+        return locations
 
 
 class Place(models.Model):
