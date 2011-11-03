@@ -50,3 +50,26 @@ def geocode(address):
 
 def geolocate(ip):
     return _geo_query(ip, query_type='ip')
+
+
+def smart_geo(request):
+    geo_query = request.GET.get('geo')
+    if geo_query:
+        # if the user has submitted an address, attempt to look it up
+        geolocation = geocode(geo_query)
+        if geolocation[0][0] is not None:
+            # geolocation found from address, save it
+            request.session['geolocation'] = geolocation
+            return geolocation
+        if request.session.get('geolocation'):
+            # there is existing geolocation data in the session
+            return request.session.get('geolocation')
+    # no query submitted, or geolocation not found
+    # attempt to geolocate from ip address
+    # this implementation may be too specific, maybe a setting would work
+    ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META['REMOTE_ADDR']
+    geolocation = geolocate(request.META.get('HTTP_X_FORWARDED_FOR'))
+    if geolocation[0][0] is not None:
+        return geolocation
+    # could not otherwise find location data, fall back to station ZIP code
+    return geocode(settings.DEFAULT_ZIP_CODE)
