@@ -16,7 +16,7 @@ class PlaceManager(models.Manager):
         if not (latitude and longitude and distance):
             return []
         
-        queryset = super(LocationManager, self).get_query_set()
+        queryset = super(PlaceManager, self).get_query_set()
         
         # prune down the set of all locations to something we can quickly check
         # precisely
