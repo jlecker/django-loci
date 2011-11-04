@@ -5,12 +5,22 @@
 {% block content %}
 <h1>Loci Home</h1>
 
+<h2>My Location</h2>
+<p>Current Location: {{ request_location.1.0 }},
+{{ request_location.1.1 }} {{ request_location.1.2 }} {{ request_location.1.3 }}
+({{ request_location.0.0 }}, {{ request_location.0.1 }})
+</p>
+<form>
+    <p>New Location: <input type="text" name="geo" />
+        <input type="submit" value="Change" /></p>
+</form>
+
 {% if places %}
 <h2>Places in the Database</h2>
-    {% google_map for places and request.geolocation.address.geometry.coordinates.1 request.geolocation.address.geometry.coordinates.0 %}
+    {% google_map for places and request_location.0.0 request_location.0.1 %}
     <ol>
     {% for p in places %}
-        {% distance from p to request.geolocation.address.geometry.coordinates.1 request.geolocation.address.geometry.coordinates.0 as dist %}
+        {% distance from p to request_location.0.0 request_location.0.1 as dist %}
         <li><ul>
             <li>Name: {{ p.name }}</li>
             <li>Address: {{ p.address }}, {{ p.city }} {{ p.state }} {{ p.zip_code }}</li>
@@ -27,6 +37,6 @@
 <form method="POST">
     {% csrf_token %}
     {{ form.as_p }}
-    <p><input type="Submit"/></p>
+    <p><input type="Submit" /></p>
 </form>
 {% endblock %}

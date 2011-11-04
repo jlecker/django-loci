@@ -7,7 +7,8 @@ from simplegeo.util import APIError
 
 
 def _geo_query(query, query_type=None):
-    cache_key = 'geo:' + slugify(str(query))
+    query = str(query)
+    cache_key = 'geo:' + slugify(query)
     location = cache.get(cache_key)
     if location:
         return location
@@ -68,7 +69,7 @@ def smart_geo(request):
     # attempt to geolocate from ip address
     # this implementation may be too specific, maybe a setting would work
     ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META['REMOTE_ADDR']
-    geolocation = geolocate(request.META.get('HTTP_X_FORWARDED_FOR'))
+    geolocation = geolocate(ip)
     if geolocation[0][0] is not None:
         return geolocation
     # could not otherwise find location data, fall back to station ZIP code
