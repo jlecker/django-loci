@@ -65,7 +65,8 @@ class Place(models.Model):
         return u'%s (%s, %s)' % (self.name, self.latitude, self.longitude)
     
     def save(self, *args, **kwargs):
-        (self.location, address_tuple) = geocode(self.full_address)
+        if self.full_address and self.location == (None, None):
+            (self.location, address_tuple) = geocode(self.full_address)
         super(Place, self).save(*args, **kwargs)
     
     def distance_to(self, latitude, longitude):
@@ -76,12 +77,16 @@ class Place(models.Model):
     
     @property
     def full_address(self):
-        return '%s, %s %s %s' % (
-            self.address,
-            self.city,
-            self.state,
-            self.zip_code,
-        )
+        parts = []
+        if self.address:
+            parts.append(self.address + ',')
+        if self.city:
+            parts.append(self.city)
+        if self.state:
+            parts.append(self.state)
+        if self.zip_code:
+            parts.append(self.zip_code)
+        return ' '.join(parts)
 
     @property
     def location(self):
