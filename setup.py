@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-VERSION == __import__('mediaman').__version__
+VERSION = __import__('mediaman').__version__
 
 
 setup(
