@@ -15,7 +15,7 @@ class PlaceMapNode(template.Node):
         if len(bits) not in (1, 6):
             raise template.TemplateSyntaxError
         if len(bits) == 6:
-            if bits[1] != "for" and bits[3] != "and":
+            if bits[1] != "for" or bits[3] != "and":
                 raise template.TemplateSyntaxError
             
             return cls(
