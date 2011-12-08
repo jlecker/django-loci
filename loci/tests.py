@@ -55,13 +55,15 @@ class LookupTests(TestCase):
         mock_request.META = {'REMOTE_ADDR': '127.0.0.1'}
 
         # should fall back to DEFAULT_ZIP_CODE
-        l1 = geolocate_request(mock_request)
+        l1 = geolocate_request(mock_request, 100)
         self.assertTrue(l1.location)
+        self.assertEqual(l1.nearby_distance, 160)
         
         # should find the new ZIP, with a different location than default
         mock_request.GET['geo'] = '54481'
-        l2 = geolocate_request(mock_request)
+        l2 = geolocate_request(mock_request, 50)
         self.assertTrue(l2.location)
+        self.assertEqual(l2.nearby_distance, 50)
         self.assertNotEqual(l2.location, l1.location)
         
         # geolocation should be saved in the session now

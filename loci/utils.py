@@ -67,7 +67,8 @@ def geolocate(ip):
     return _geo_query(ip, query_type='ip')
 
 
-def geolocate_request(request):
+def geolocate_request(request, default_dist=None):
+    found = False
     geo_query = request.GET.get('geo')
     if geo_query:
         # if the user has submitted an address, attempt to look it up
@@ -76,20 +77,31 @@ def geolocate_request(request):
             # geolocation found from address, save the query only
             # lookup data should be cached, so no need to save it in session
             request.session['geolocation'] = geo_query
-            return geolocation
-    if request.session.get('geolocation'):
+            found = True
+    if not found and request.session.get('geolocation'):
         # there is an existing geo_query in the session
         geolocation = geocode(request.session['geolocation'])
         if geolocation.latitude != None:
-            return geolocation
-        # the query did not find anything, remove it from the session
-        del request.session['geolocation']
-    # no query submitted, or geolocation not found
-    # attempt to geolocate from ip address
-    # this implementation may be too specific, maybe a setting would work
-    ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META['REMOTE_ADDR']
-    geolocation = geolocate(ip)
-    if geolocation.latitude != None:
-        return geolocation
-    # could not otherwise find location data, fall back to station ZIP code
-    return geocode(settings.DEFAULT_ZIP_CODE)
+            found = True
+        else:
+            # the query did not find anything, remove it from the session
+            del request.session['geolocation']
+    if not found:
+        # no query submitted, or geolocation not found
+        # attempt to geolocate from ip address
+        # this implementation may be too specific, maybe a setting would work
+        ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META['REMOTE_ADDR']
+        geolocation = geolocate(ip)
+        if geolocation.latitude != None:
+            found = True
+    if not found:
+        # could not otherwise find location data, fall back to station ZIP code
+        geolocation = geocode(settings.DEFAULT_ZIP_CODE)
+    geolocation.nearby_distance = 160
+    if found:
+        try:
+            geolocation.nearby_distance = int(request.GET.get('dist', ''))
+        except ValueError:
+            if default_dist:
+                geolocation.nearby_distance = default_dist
+    return geolocation
