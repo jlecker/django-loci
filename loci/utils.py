@@ -8,8 +8,7 @@ from simplegeo.util import APIError
 
 
 def _geo_query(query, query_type=None):
-    query = str(query)
-    cache_key = 'geo:' + slugify(query)
+    cache_key = 'geo:' + slugify(str(query))
     location_data = cache.get(cache_key)
     
     if not location_data:
@@ -33,13 +32,25 @@ def _geo_query(query, query_type=None):
         query = data.get('query', {})
         location = (query.get('latitude'), query.get('longitude'))
         aprops = data.get('address', {}).get('properties', {})
+        state = aprops.get('province')
+        zip_code = aprops.get('postcode')
+        
+        # alternate ways to get get state and ZIP
+        # because address is not always available
+        if not (state and zip_code):
+            for feature in data.get('features', []):
+                for classifier in feature.get('classifiers', []):
+                    if classifier.get('subcategory') == 'State':
+                        state = feature.get('abbr')
+                    if classifier.get('category') == 'Postal Code':
+                        zip_code = feature.get('name')
+        
         address_data = (
             aprops.get('address'),
             aprops.get('city'),
-            aprops.get('province'),
-            aprops.get('postcode')
+            state,
+            zip_code,
         )
-        
         location_data = (location, address_data)
         cache.set(cache_key, location_data, 86400)
     
@@ -65,6 +76,9 @@ def geocode(address):
 
 def geolocate(ip):
     return _geo_query(ip, query_type='ip')
+
+def get_geo(location):
+    return _geo_query(location)
 
 
 def geolocate_request(request, default_dist=None):
