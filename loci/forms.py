@@ -13,3 +13,15 @@ class PlaceForm(forms.ModelForm):
             "state",
             "zip_code"
         ]
+
+
+class GeolocationForm(forms.Form):
+    geo = forms.CharField(label='Location')
+
+
+class GeolocationDistanceForm(GeolocationForm):
+    dist = forms.ChoiceField(
+        choices=[(m, '%s miles' % m) for m in [5, 10, 20, 40, 80, 160]],
+        initial=160,
+        label='Distance'
+    )
