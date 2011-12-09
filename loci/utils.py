@@ -19,9 +19,9 @@ def _geo_query(query, query_type=None):
         )
         try:
             if query_type == 'address':
-                data = client.context.get_context_by_address(query)
+                data = client.context.get_context_by_address(str(query))
             elif query_type == 'ip':
-                data = client.context.get_context_by_ip(query)
+                data = client.context.get_context_by_ip(str(query))
             else:
                 (lat, lon) = query
                 data = client.context.get_context(lat, lon)
