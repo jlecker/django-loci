@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.db.models.query import QuerySet
 from django.conf import settings
@@ -28,7 +30,7 @@ class PlaceQuerySet(QuerySet):
         # prune down the set of all locations to something we can quickly check
         # precisely
         (latitude, longitude) = location
-        deg_lat = degrees(arcminutes=nautical(miles=distance))
+        deg_lat = Decimal(degrees(arcminutes=nautical(miles=distance)))
         lat_range = (latitude - deg_lat, latitude + deg_lat)
         long_range = (longitude - deg_lat * 2, longitude + deg_lat * 2)
         queryset = self.filter(
@@ -43,7 +45,6 @@ class PlaceQuerySet(QuerySet):
                     (latitude, longitude),
                     (location.latitude, location.longitude)
                 )
-                exact_distance.calculate()
                 if exact_distance.miles <= distance:
                     locations.append(location)
         return locations

@@ -4,9 +4,13 @@ from loci.models import Place
 from loci.utils import geocode, geolocate_request
 
 
-class ModelTests(TestCase):
-    def test_place_creation(self):
+class _Mock(object):
+    pass
 
+
+class ModelTests(TestCase):
+    
+    def test_place_creation(self):
         # make sure geocode is working
         assert(geocode('54403').latitude)
 
@@ -40,10 +44,18 @@ class ModelTests(TestCase):
         )
         self.assertEqual(place3.address, '557 Scott St')
         self.assertEqual(place3.location, (-45, -45))
-
-
-class _Mock(object):
-    pass
+    
+    def test_near_query(self):
+        test_place = Place.objects.create(
+            name='Wausau',
+            city='Wausau',
+            state='WI'
+        )
+        location = geocode('54401')
+        
+        nearby = Place.objects.near(location.location, 20)
+        self.assertEqual(len(nearby), 1)
+        self.assertTrue(test_place in nearby)
 
 
 class LookupTests(TestCase):
