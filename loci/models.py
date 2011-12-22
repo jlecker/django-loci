@@ -20,17 +20,33 @@ class PlaceManager(models.Manager):
 
 
 class PlaceQuerySet(QuerySet):
-    def near(self, location, distance):
+    def near(self, location, distance=None):
         """
         Returns a list of items in the QuerySet which are within the given
         distance of the given location. Does NOT return a QuerySet.
+
+        Accepts either a Place instance or a (lat, lon) tuple for location.
+        Also accepts a Place instance with a nearby_distance attribute added
+        (as returned from utils.geolocate_request); in this case, distance need
+        not be explicitly passed.
         
         """
+        
+        # figure out if we received an object or tuple and get the location
+        try:
+            (latitude, longitude) = location.location
+        except AttributeError:
+            (latitude, longitude) = location
+        
+        # get the passed distance or attached to Place
+        if distance == None:
+            try:
+                distance = location.nearby_distance
+            except AttributeError:
+                raise ValueError('Distance must be attached or passed explicitly.')
 
-        # prune down the set of all locations to something we can quickly check
-        # precisely
-        (latitude, longitude) = location
-        deg_lat = Decimal(degrees(arcminutes=nautical(miles=distance)))
+        # prune down the set of places before checking precisely
+        deg_lat = Decimal(str(degrees(arcminutes=nautical(miles=distance))))
         lat_range = (latitude - deg_lat, latitude + deg_lat)
         long_range = (longitude - deg_lat * 2, longitude + deg_lat * 2)
         queryset = self.filter(

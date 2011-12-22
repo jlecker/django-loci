@@ -53,7 +53,22 @@ class ModelTests(TestCase):
         )
         location = geocode('54401')
         
+        # lookup using the location tuple and explicit distance
         nearby = Place.objects.near(location.location, 20)
+        self.assertEqual(len(nearby), 1)
+        self.assertTrue(test_place in nearby)
+        
+        # lookup with location object and explicit distance
+        nearby = Place.objects.near(location, 20)
+        self.assertEqual(len(nearby), 1)
+        self.assertTrue(test_place in nearby)
+        
+        # lookup with no distance info should fail
+        self.assertRaises(ValueError, Place.objects.near, location)
+        
+        # lookup with distance attached but not passed explicitly
+        location.nearby_distance = 20
+        nearby = Place.objects.near(location)
         self.assertEqual(len(nearby), 1)
         self.assertTrue(test_place in nearby)
 
