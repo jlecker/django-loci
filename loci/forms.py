@@ -25,3 +25,12 @@ class GeolocationDistanceForm(GeolocationForm):
         initial=160,
         label='Distance'
     )
+
+
+def geo_form_for_place(place):
+    return GeolocationForm(initial={'geo': place,zip_code})
+
+
+def geodist_form_for_place(request_place):
+    return GeolocationDistanceForm(initial={
+        'geo': request_place,zip_code, 'dist': request_place.nearby_distance})
