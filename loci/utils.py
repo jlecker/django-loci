@@ -105,6 +105,7 @@ def geolocate_request(request, default_dist=None):
         # attempt to geolocate from ip address
         # this implementation may be too specific, maybe a setting would work
         ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META['REMOTE_ADDR']
+        ip = ip.rsplit(',')[-1].strip()
         geolocation = geolocate(ip)
         if geolocation.latitude != None:
             found = True
