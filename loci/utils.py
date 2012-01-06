@@ -7,6 +7,9 @@ from simplegeo import Client
 from simplegeo.util import APIError
 
 
+MAX_DIST = 160
+
+
 def _geo_query(query, query_type=None):
     cache_key = 'geo:' + slugify(str(query))
     location_data = cache.get(cache_key)
@@ -109,12 +112,12 @@ def geolocate_request(request, default_dist=None):
         geolocation = geolocate(ip)
         defloc = geocode(settings.DEFAULT_ZIP_CODE)
         if geolocation.latitude != None:
-            if geolocation.distance_to(defloc.latitude, defloc.longitude) <= 160:
+            if geolocation.distance_to(defloc.latitude, defloc.longitude) <= MAX_DIST:
                 found = True
     if not found:
         # could not otherwise find location data, fall back to station ZIP code
         geolocation = defloc
-    geolocation.nearby_distance = 160
+    geolocation.nearby_distance = MAX_DIST
     if found:
         try:
             geolocation.nearby_distance = int(request.GET.get('dist', ''))
