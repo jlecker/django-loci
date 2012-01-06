@@ -107,11 +107,13 @@ def geolocate_request(request, default_dist=None):
         ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META['REMOTE_ADDR']
         ip = ip.rsplit(',')[-1].strip()
         geolocation = geolocate(ip)
+        defloc = geocode(settings.DEFAULT_ZIP_CODE)
         if geolocation.latitude != None:
-            found = True
+            if geolocation.distance_to(defloc.latitude, defloc.longitude) <= 160:
+                found = True
     if not found:
         # could not otherwise find location data, fall back to station ZIP code
-        geolocation = geocode(settings.DEFAULT_ZIP_CODE)
+        geolocation = defloc
     geolocation.nearby_distance = 160
     if found:
         try:
