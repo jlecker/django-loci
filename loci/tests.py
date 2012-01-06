@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.conf import settings
 
 from loci.models import Place
 from loci.utils import geocode, geolocate_request
@@ -75,6 +76,9 @@ class ModelTests(TestCase):
 
 class LookupTests(TestCase):
     def test_request_geolocation(self):
+        # use a consistent default ZIP
+        settings.DEFAULT_ZIP_CODE = 54403
+        
         # make a "request" to pass to geolocate_request
         mock_request = _Mock()
         mock_request.GET = {}
