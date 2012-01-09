@@ -77,7 +77,7 @@ class ModelTests(TestCase):
 class LookupTests(TestCase):
     def test_request_geolocation(self):
         # use a consistent default ZIP
-        settings.DEFAULT_ZIP_CODE = 54403
+        settings.DEFAULT_ZIP_CODE = '54403'
         
         # make a "request" to pass to geolocate_request
         mock_request = _Mock()
