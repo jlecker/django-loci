@@ -37,6 +37,10 @@ class PlaceQuerySet(QuerySet):
             (latitude, longitude) = location.location
         except AttributeError:
             (latitude, longitude) = location
+
+        # make sure we have a valid location
+        if not (latitude and longitude):
+            return []
         
         # get the passed distance or attached to Place
         if distance == None:
