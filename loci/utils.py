@@ -55,7 +55,8 @@ def _geo_query(query, query_type=None):
             zip_code,
         )
         location_data = (location, address_data)
-        cache.set(cache_key, location_data, 86400)
+        if data:
+            cache.set(cache_key, location_data, 86400)
     
     # get the model here to prevent circular import
     Place = get_model('loci', 'place')
