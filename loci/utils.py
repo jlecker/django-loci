@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.template.defaultfilters import slugify
 from django.db.models.loading import get_model
+from django.contrib.sites.models import get_current_site
 
 from simplegeo import Client
 from simplegeo.util import APIError
@@ -111,7 +112,11 @@ def geolocate_request(request, default_dist=None):
         ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META['REMOTE_ADDR']
         ip = ip.rsplit(',')[-1].strip()
         geolocation = geolocate(ip)
-        defloc = geocode(settings.DEFAULT_ZIP_CODE)
+        try:
+            zip_code = get_current_site(request).profile.zip_code
+        except AttributeError:
+            zip_code = settings.DEFAULT_ZIP_CODE
+        defloc = geocode(zip_code)
         if geolocation.latitude != None:
             if geolocation.distance_to(defloc.latitude, defloc.longitude) <= MAX_DIST:
                 found = True
