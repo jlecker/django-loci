@@ -89,6 +89,10 @@ def get_geo(location):
 def geolocate_request(request, default_dist=None):
     found = False
     geo_query = request.GET.get('geo')
+    try:
+        found_dist = int(request.GET.get('dist', ''))
+    except ValueError:
+        found_dist = request.session.get('geodistance', default_dist or MAX_DIST)
     if geo_query:
         # if the user has submitted an address, attempt to look it up
         geolocation = geocode(geo_query)
@@ -96,6 +100,7 @@ def geolocate_request(request, default_dist=None):
             # geolocation found from address, save the query only
             # lookup data should be cached, so no need to save it in session
             request.session['geolocation'] = geo_query
+            request.session['geodistance'] = found_dist
             found = True
     if not found and request.session.get('geolocation'):
         # there is an existing geo_query in the session
@@ -104,6 +109,7 @@ def geolocate_request(request, default_dist=None):
             found = True
         else:
             # the query did not find anything, remove it from the session
+            del request.session['geodistance']
             del request.session['geolocation']
     if not found:
         # no query submitted, or geolocation not found
@@ -123,11 +129,8 @@ def geolocate_request(request, default_dist=None):
     if not found:
         # could not otherwise find location data, fall back to station ZIP code
         geolocation = defloc
-    geolocation.nearby_distance = MAX_DIST
     if found:
-        try:
-            geolocation.nearby_distance = int(request.GET.get('dist', ''))
-        except ValueError:
-            if default_dist:
-                geolocation.nearby_distance = default_dist
+        geolocation.nearby_distance = found_dist
+    else:
+        geolocation.nearby_distance = MAX_DIST
     return geolocation
