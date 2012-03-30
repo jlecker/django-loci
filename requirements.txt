@@ -5,3 +5,4 @@ ipaddr==2.1.9
 oauth2==1.5.170
 simplegeo==3.0.127
 simplejson==2.2.1
+requests

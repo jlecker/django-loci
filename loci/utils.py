@@ -1,14 +1,15 @@
+import json
+
 from django.conf import settings
 from django.core.cache import cache
 from django.template.defaultfilters import slugify
 from django.db.models.loading import get_model
 from django.contrib.sites.models import get_current_site
 
-from simplegeo import Client
-from simplegeo.util import APIError
+import requests
 
 
-MAX_DIST = 160
+MAX_DIST = 80
 
 
 def _geo_query(query, query_type=None):
@@ -17,41 +18,48 @@ def _geo_query(query, query_type=None):
     
     if not location_data:
         # data not in cache, do an API query
-        client = Client(
-            settings.LOCI_SIMPLEGEO_OAUTH_KEY,
-            settings.LOCI_SIMPLEGEO_SECRET
-        )
+        api_url = 'http://maps.googleapis.com/maps/api/geocode/json?'
+        if query_type == 'address':
+            api_url += 'address=%s' % query
+        else:
+            api_url += 'latlng=%s,%s' % query
+        api_url += '&sensor=false'
         try:
-            if query_type == 'address':
-                data = client.context.get_context_by_address(str(query))
-            elif query_type == 'ip':
-                data = client.context.get_context_by_ip(str(query))
-            else:
-                (lat, lon) = query
-                data = client.context.get_context(lat, lon)
-        except APIError:
+            resp = requests.get(api_url)
+        except requests.exceptions.RequestException:
             data = {}
+        else:
+            if resp.status_code == 200:
+                data = json.loads(resp.text)
+            else:
+                data = {}
         
         # for now, we only need coords and address, but more is available
-        query = data.get('query', {})
-        location = (query.get('latitude'), query.get('longitude'))
-        aprops = data.get('address', {}).get('properties', {})
-        state = aprops.get('province')
-        zip_code = aprops.get('postcode')
-        
-        # alternate ways to get get state and ZIP
-        # because address is not always available
-        if not (state and zip_code):
-            for feature in data.get('features', []):
-                for classifier in feature.get('classifiers', []):
-                    if classifier.get('subcategory') == 'State':
-                        state = feature.get('abbr')
-                    if classifier.get('category') == 'Postal Code':
-                        zip_code = feature.get('name')
+        result = data.get('results', [{}])[0]
+
+        latlon = result.get('geometry', {}).get('location', {})
+        location = (latlon.get('lat'), latlon.get('lng'))
+
+        street_address = city = state = zip_code = None
+        number = route = ''
+        acomps = result.get('address_components', [])
+        for comp in acomps:
+            if 'street_number' in comp['types']:
+                number = comp['long_name']
+            if 'route' in comp['types']:
+                route = comp['long_name']
+            if 'locality' in comp['types']:
+                city = comp['long_name']
+            if 'administrative_area_level_1' in comp['types']:
+                state = comp['short_name']
+            if 'postal_code' in comp['types']:
+                zip_code = comp['long_name']
+        if number or route:
+            street_address = number + ' ' + route
         
         address_data = (
-            aprops.get('address'),
-            aprops.get('city'),
+            street_address,
+            city,
             state,
             zip_code,
         )
@@ -78,9 +86,6 @@ def _geo_query(query, query_type=None):
 def geocode(address):
     return _geo_query(address, query_type='address')
 
-
-def geolocate(ip):
-    return _geo_query(ip, query_type='ip')
 
 def get_geo(location):
     return _geo_query(location)
@@ -112,22 +117,13 @@ def geolocate_request(request, default_dist=None):
             del request.session['geodistance']
             del request.session['geolocation']
     if not found:
-        # no query submitted, or geolocation not found
-        # attempt to geolocate from ip address
-        # this implementation may be too specific, maybe a setting would work
-        ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META['REMOTE_ADDR']
-        ip = ip.rsplit(',')[-1].strip()
-        geolocation = geolocate(ip)
+        print 'looking up by ZIP'
+        # could not otherwise find location data, fall back to station ZIP code
         try:
             zip_code = get_current_site(request).profile.zip_code
         except AttributeError:
             zip_code = settings.DEFAULT_ZIP_CODE
         defloc = geocode(zip_code)
-        if geolocation.latitude != None:
-            if geolocation.distance_to(defloc.latitude, defloc.longitude) <= MAX_DIST:
-                found = True
-    if not found:
-        # could not otherwise find location data, fall back to station ZIP code
         geolocation = defloc
     if found:
         geolocation.nearby_distance = found_dist
