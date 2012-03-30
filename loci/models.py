@@ -87,7 +87,14 @@ class Place(models.Model):
     
     def save(self, *args, **kwargs):
         if self.full_address and self.location == (None, None):
-            self.location = geocode(self.full_address).location
+            geoloc = geocode(self.full_address)
+            self.location = geoloc.location
+            if not self.city:
+                self.city = geoloc.city
+            if not self.state:
+                self.state = geoloc.state
+            if not self.zip_code:
+                self.zip_code = geoloc.zip_code
         super(Place, self).save(*args, **kwargs)
     
     def distance_to(self, latitude, longitude):
