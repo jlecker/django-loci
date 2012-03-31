@@ -50,7 +50,8 @@ class PlaceQuerySet(QuerySet):
                 raise ValueError('Distance must be attached or passed explicitly.')
 
         # prune down the set of places before checking precisely
-        deg_lat = Decimal(str(degrees(arcminutes=nautical(miles=distance))))
+        #deg_lat = Decimal(str(degrees(arcminutes=nautical(miles=distance))))
+        deg_lat = degrees(arcminutes=nautical(miles=distance))
         lat_range = (latitude - deg_lat, latitude + deg_lat)
         long_range = (longitude - deg_lat * 2, longitude + deg_lat * 2)
         queryset = self.filter(

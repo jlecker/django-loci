@@ -57,6 +57,17 @@ def _geo_query(query, query_type=None):
         if number or route:
             street_address = number + ' ' + route
         
+        if query_type == 'address' and not (city and state and zip_code) and \
+                location != (None, None):
+            # missing some data, try to get it from coords
+            loc_data = get_geo(location)
+            if not city:
+                city = loc_data.city
+            if not state:
+                state = loc_data.state
+            if not zip_code:
+                zip_code = loc_data.zip_code
+        
         address_data = (
             street_address,
             city,
@@ -117,7 +128,6 @@ def geolocate_request(request, default_dist=None):
             del request.session['geodistance']
             del request.session['geolocation']
     if not found:
-        print 'looking up by ZIP'
         # could not otherwise find location data, fall back to station ZIP code
         try:
             zip_code = get_current_site(request).profile.zip_code
