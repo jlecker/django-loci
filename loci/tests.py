@@ -88,7 +88,7 @@ class LookupTests(TestCase):
         # should fall back to DEFAULT_ZIP_CODE
         l1 = geolocate_request(mock_request, 100)
         self.assertTrue(l1.location)
-        self.assertEqual(l1.nearby_distance, 160)
+        self.assertEqual(l1.nearby_distance, 80)
         
         # should find the new ZIP, with a different location than default
         mock_request.GET['geo'] = '54481'

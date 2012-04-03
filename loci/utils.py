@@ -35,7 +35,11 @@ def _geo_query(query, query_type=None):
                 data = {}
         
         # for now, we only need coords and address, but more is available
-        result = data.get('results', [{}])[0]
+        results = data.get('results', [])
+        if results:
+            result = results[0]
+        else:
+            result = {}
 
         latlon = result.get('geometry', {}).get('location', {})
         location = (latlon.get('lat'), latlon.get('lng'))
