@@ -13,7 +13,7 @@ def home(request):
         form = PlaceForm(request.POST)
         if form.is_valid():
             place = form.save()
-            return redirect("home")
+            return redirect("loci_home")
     else:
         form = PlaceForm()
     
