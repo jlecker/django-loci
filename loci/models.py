@@ -1,4 +1,11 @@
-from decimal import Decimal
+"""
+Models
+======
+
+The :class:`Place` model and its associated :class:`Manager` and
+:class:`QuerySet` subclasses.
+
+"""
 
 from django.db import models
 from django.db.models.query import QuerySet
@@ -12,6 +19,13 @@ from loci.utils import geocode
 
 
 class PlaceManager(models.Manager):
+    """
+    A :class:`Manager` designed for the :class:`Place` model.
+
+    Returns a :class:`PlaceQuerySet` and proxies the :method:`near` method.
+
+    """
+
     def get_query_set(self):
         return PlaceQuerySet(self.model, using=self.db)
 
@@ -22,13 +36,14 @@ class PlaceManager(models.Manager):
 class PlaceQuerySet(QuerySet):
     def near(self, location, distance=None):
         """
-        Returns a list of items in the QuerySet which are within the given
-        distance of the given location. Does NOT return a QuerySet.
+        Returns a list of items in the QuerySet which are within the
+        given distance of the given location. Does NOT return a
+        QuerySet.
 
-        Accepts either a Place instance or a (lat, lon) tuple for location.
-        Also accepts a Place instance with a nearby_distance attribute added
-        (as returned from utils.geolocate_request); in this case, distance need
-        not be explicitly passed.
+        Accepts either a Place instance or a (lat, lon) tuple for
+        location. Also accepts a Place instance with a nearby_distance
+        attribute added (as returned from utils.geolocate_request); in
+        this case, distance need not be explicitly passed.
         
         """
         
