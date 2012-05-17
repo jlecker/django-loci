@@ -36,14 +36,15 @@ class PlaceManager(models.Manager):
 class PlaceQuerySet(QuerySet):
     def near(self, location, distance=None):
         """
-        Returns a list of items in the QuerySet which are within the
-        given distance of the given location. Does NOT return a
-        QuerySet.
+        Returns a list of items in the :class:`QuerySet` which are
+        within the given distance of the given location. Does NOT return
+        a :class:`QuerySet`.
 
-        Accepts either a Place instance or a (lat, lon) tuple for
-        location. Also accepts a Place instance with a nearby_distance
-        attribute added (as returned from utils.geolocate_request); in
-        this case, distance need not be explicitly passed.
+        Accepts either a :class:`Place` instance or a (lat, lon) tuple
+        for location. Also accepts a Place instance with a
+        ``nearby_distance`` attribute added (as returned from
+        :func:`loci.utils.geolocate_request`); in this case, distance
+        need not be explicitly passed.
         
         """
         
@@ -87,6 +88,11 @@ class PlaceQuerySet(QuerySet):
 
 
 class Place(models.Model):
+    """
+    A basic place model. Great for subclassing.
+
+    """
+
     name = models.CharField(max_length=200)
     address = models.CharField(max_length=180, blank=True)
     city = models.CharField(max_length=50, blank=True)
