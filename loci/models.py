@@ -93,10 +93,10 @@ class Place(models.Model):
     """
 
     name = models.CharField(max_length=200)
-    address = models.CharField(max_length=180, blank=True)
-    city = models.CharField(max_length=50, blank=True)
+    address = models.CharField(max_length=180, blank=True, default='')
+    city = models.CharField(max_length=50, blank=True, default='')
     state = USStateField(blank=True)
-    zip_code = models.CharField(max_length=10, blank=True)
+    zip_code = models.CharField(max_length=10, blank=True, default='')
     
     latitude = models.FloatField(null=True, blank=True, default=None)
     longitude = models.FloatField(null=True, blank=True, default=None)
