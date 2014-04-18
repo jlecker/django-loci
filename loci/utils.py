@@ -9,7 +9,7 @@ from django.contrib.sites.models import get_current_site
 import requests
 
 
-MAX_DIST = 80
+MAX_DIST = getattr(settings, 'LOCI_NEARBY_DISTANCE', 80)
 
 
 def _geo_query(query, query_type=None):
