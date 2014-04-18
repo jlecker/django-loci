@@ -77,11 +77,11 @@ class PlaceQuerySet(QuerySet):
         locations = []
         for location in queryset:
             if location.latitude and location.longitude:
-                exact_distance = geopy.distance.distance(
+                location.exact_distance = geopy.distance.distance(
                     (latitude, longitude),
                     (location.latitude, location.longitude)
                 )
-                if exact_distance.miles <= distance:
+                if location.exact_distance.miles <= distance:
                     locations.append(location)
         return locations
 
