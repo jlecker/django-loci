@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 
 from loci.models import Place
 
@@ -19,9 +20,15 @@ class GeolocationForm(forms.Form):
     geo = forms.CharField(label='Location')
 
 
+DISTANCE_CHOICES = getattr(
+    settings,
+    'LOCI_DISTANCE_CHOICES',
+    [5, 10, 20, 40, 80, 160]
+)
+
 class GeolocationDistanceForm(GeolocationForm):
     dist = forms.ChoiceField(
-        choices=[(m, '%s miles' % m) for m in [5, 10, 20, 40, 80, 160]],
+        choices=[(m, '%s miles' % m) for m in DISTANCE_CHOICES],
         initial=160,
         label='Distance'
     )
