@@ -9,8 +9,9 @@ The :class:`Place` model and its associated :class:`Manager` and
 
 from django.db import models
 from django.db.models.query import QuerySet
-from localflavor.us.models import USStateField
+from django.conf import settings
 
+from localflavor.us.models import USStateField
 from geopy.units import nautical, degrees
 import geopy.distance
 
@@ -107,7 +108,13 @@ class Place(models.Model):
         return u'%s (%s, %s)' % (self.name, self.latitude, self.longitude)
     
     def save(self, *args, **kwargs):
-        if self.full_address and self.location == (None, None):
+        if (
+            self.full_address
+            and (
+                self.location == (None, None)
+                or getattr(settings, 'LOCI_ALWAYS_SET_LOCATION', False)
+            )
+        ):
             geoloc = geocode(self.full_address)
             self.location = geoloc.location
             if not self.city:
