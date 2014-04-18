@@ -10,7 +10,7 @@ The :class:`Place` model and its associated :class:`Manager` and
 from django.db import models
 from django.db.models.query import QuerySet
 from django.conf import settings
-from django.contrib.localflavor.us.models import USStateField
+from localflavor.us.models import USStateField
 
 from geopy.units import nautical, degrees
 import geopy.distance
